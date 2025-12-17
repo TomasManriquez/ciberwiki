@@ -9,8 +9,10 @@ export const users = sqliteTable('users', {
     name: text('name'),
     avatar: text('avatar'),
     authProvider: text('auth_provider').default('google'), // 'google' | 'ldap'
-    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
+    role: text('role').default('user'), // 'admin' | 'user' | 'audience'
+    status: text('status').default('active'), // 'active' | 'inactive'
     password: text('password'), // Optional for OAuth/LDAP users
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
 });
 
 // ============== STANDARDS ==============
@@ -87,5 +89,24 @@ export const pages = sqliteTable('pages', {
     googleDocId: text('google_doc_id'),
     lastEditedBy: text('last_edited_by').references(() => users.id),
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+});
+
+// ============== AUDIT LOGS ==============
+export const auditLogs = sqliteTable('audit_logs', {
+    id: text('id').primaryKey(),
+    userId: text('user_id').references(() => users.id),
+    action: text('action').notNull(), // 'LOGIN', 'CREATE_STANDARD', 'DELETE_USER', etc.
+    details: text('details'), // JSON string with details
+    ipAddress: text('ip_address'),
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
+});
+
+// ============== SETTINGS ==============
+export const settings = sqliteTable('settings', {
+    id: text('id').primaryKey(),
+    key: text('key').notNull().unique(),
+    value: text('value').notNull(), // JSON string value
+    description: text('description'),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });

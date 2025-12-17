@@ -17,3 +17,5 @@ router.post('/link', (c) => controller.linkToControl(c));
 router.post('/unlink', (c) => controller.unlinkFromControl(c));
 
 export default router;
+
+router.get('/download/:id', (c) => controller.download(c));

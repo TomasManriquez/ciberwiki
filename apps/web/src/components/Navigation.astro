@@ -1,71 +1,31 @@
----
-const { title } = Astro.props;
-
-// Check for auth cookie (simplified check, ideally verify token)
-const token = Astro.cookies.get("auth_token");
-const isLoggedIn = !!token;
----
-
-<nav class="fixed w-full z-50 glass-nav border-b border-white/10">
-  <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-    <a href="/" class="flex items-center space-x-3 group">
-      <div
-        class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-blue-500/25 transition-all duration-300"
-      >
-        <span class="text-xl font-bold text-white">A</span>
-      </div>
-      <span
-        class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400"
-      >
-        Allware Wiki
-      </span>
-    </a>
-
-    <div class="hidden md:flex items-center space-x-8">
-      <a href="/dashboard" class="nav-link">Dashboard</a>
-      <a href="/standards" class="nav-link">Standards</a>
-      <a href="/controls" class="nav-link">Controls</a>
-      <a href="/evidence" class="nav-link">Evidence</a>
-    </div>
-
-    <div class="flex items-center space-x-4">
-      {
-        isLoggedIn ? (
-          <div class="flex items-center space-x-4">
-            <a
-              href="/dashboard"
-              class="text-sm text-slate-300 hover:text-white transition-colors"
-            >
-              My Dashboard
-            </a>
-            <a
-              href="http://localhost:3000/api/auth/logout"
-              class="btn-secondary text-sm py-2 px-4"
-            >
-              Sign Out
-            </a>
-          </div>
-        ) : (
-          <a href="/login" class="btn-primary">
-            Iniciar Sesión
-          </a>
-        )
-      }
-    </div>
-  </div>
-</nav>
-
-<style>
-  .nav-link {
-    @apply text-sm font-medium text-slate-400 hover:text-white transition-colors relative;
-  }
-
-  .nav-link::after {
-    content: "";
-    @apply absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-500 transition-all duration-300;
-  }
-
-  .nav-link:hover::after {
-    @apply w-full;
-  }
-</style>
+``` --- const { title } = Astro.props; // Helper to parse JWT (simple decode)
+function parseJwt(token: string) { try { return
+JSON.parse(Buffer.from(token.split(".")[1], "base64").toString()); } catch (e) {
+return null; } } // Check for auth cookie const cookie =
+Astro.cookies.get("auth_token"); const token = cookie?.value; let user = null;
+if (token) { user = parseJwt(token); } const isLoggedIn = !!user; --- <nav
+class="fixed w-full z-50 glass-nav border-b border-white/10"> <div
+class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between"> <a
+href="/" class="flex items-center space-x-3 group"> <div class="w-10 h-10
+bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center
+justify-center shadow-lg group-hover:shadow-blue-500/25 transition-all
+duration-300" > <span class="text-xl font-bold text-white">A</span> </div> <span
+class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r
+from-white to-slate-400" > Allware Wiki </span> </a> <div class="hidden md:flex
+items-center space-x-8"> <a href="/dashboard" class="nav-link">Dashboard</a> <a
+href="/standards" class="nav-link">Standards</a> <a href="/controls"
+class="nav-link">Controls</a> <a href="/evidence" class="nav-link">Evidence</a>
+</div> <div class="flex items-center space-x-4"> { isLoggedIn ? ( <div
+class="flex items-center space-x-4"> <a href="/dashboard" class="flex
+items-center space-x-2 text-sm text-slate-300 hover:text-white
+transition-colors" > <div class="w-8 h-8 rounded-full bg-gradient-to-tr
+from-purple-500 to-blue-500 flex items-center justify-center text-xs font-bold
+text-white"> {user?.name?.charAt(0) || user?.username?.charAt(0) || "U"} </div>
+<span class="hidden lg:block"> {user?.name || user?.username || "User"} </span>
+</a> <a href="http://localhost:3000/api/auth/logout" class="btn-secondary
+text-sm py-2 px-4" > Sign Out </a> </div> ) : ( <a href="/login"
+class="btn-primary"> Iniciar Sesión </a> ) } </div> </div> </nav> <style>
+.nav-link { @apply text-sm font-medium text-slate-400 hover:text-white
+transition-colors relative; } .nav-link::after { content: ""; @apply absolute
+-bottom-1 left-0 w-0 h-0.5 bg-blue-500 transition-all duration-300; }
+.nav-link:hover::after { @apply w-full; } </style>
