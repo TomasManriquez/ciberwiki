@@ -1,0 +1,206 @@
+---
+// DropdownMenu.astro - Three-dot menu component for card actions
+interface Props {
+    itemId: string;
+    itemType: "standard" | "control" | "evidence";
+    onDelete?: string; // JS function name to call
+    onEdit?: string; // JS function name to call
+}
+
+const { itemId, itemType, onDelete, onEdit } = Astro.props;
+const menuId = `menu-${itemType}-${itemId}`;
+---
+
+<div class="relative dropdown-container" style="pointer-events: auto;">
+    <button
+        type="button"
+        class="dropdown-trigger p-2 hover:bg-slate-700/50 rounded-lg transition-colors active:scale-95"
+        data-menu-id={menuId}
+        aria-label="Options"
+    >
+        <svg
+            class="w-5 h-5 text-slate-400"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+        >
+            <path
+                d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"
+            ></path>
+        </svg>
+    </button>
+
+    <div
+        id={menuId}
+        class="dropdown-menu hidden absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50"
+    >
+        <div class="py-1">
+            {
+                onEdit && (
+                    <button
+                        type="button"
+                        class="dropdown-item w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 flex items-center gap-2"
+                        data-action="edit"
+                        data-item-id={itemId}
+                        data-callback={onEdit}
+                    >
+                        <svg
+                            class="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                        </svg>
+                        Edit
+                    </button>
+                )
+            }
+            {
+                onDelete && (
+                    <button
+                        type="button"
+                        class="dropdown-item w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2"
+                        data-action="delete"
+                        data-item-id={itemId}
+                        data-callback={onDelete}
+                    >
+                        <svg
+                            class="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                        </svg>
+                        Delete
+                    </button>
+                )
+            }
+        </div>
+    </div>
+</div>
+
+<script is:inline>
+    // Global dropdown management - must run on client side
+    if (typeof window !== "undefined") {
+        // Wait for DOM to be ready
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", initDropdowns);
+        } else {
+            initDropdowns();
+        }
+    }
+
+    function initDropdowns() {
+        console.log("🎯 Dropdown menu initialized");
+
+        // Handle dropdown trigger clicks
+        document.addEventListener("click", (e) => {
+            const target = e.target;
+
+            // Check if click is on dropdown trigger or its children
+            const trigger = target.closest(".dropdown-trigger");
+            if (trigger) {
+                e.stopPropagation();
+                e.preventDefault();
+
+                const menuId = trigger.getAttribute("data-menu-id");
+                const menu = document.getElementById(menuId);
+
+                console.log("📍 Dropdown trigger clicked:", menuId);
+
+                // Close all other dropdowns
+                document.querySelectorAll(".dropdown-menu").forEach((m) => {
+                    if (m.id !== menuId) {
+                        m.classList.add("hidden");
+                    }
+                });
+
+                // Toggle this dropdown
+                if (menu) {
+                    menu.classList.toggle("hidden");
+                    console.log(
+                        "✅ Menu toggled:",
+                        !menu.classList.contains("hidden"),
+                    );
+                }
+                return;
+            }
+
+            // Check if click is on dropdown container (prevent card link)
+            const dropdownContainer = target.closest(".dropdown-container");
+            if (dropdownContainer) {
+                e.stopPropagation();
+                e.preventDefault();
+                console.log(
+                    "🛑 Click on dropdown container - preventing card navigation",
+                );
+            }
+
+            // Handle dropdown item clicks
+            const dropdownItem = target.closest(".dropdown-item");
+            if (dropdownItem) {
+                e.stopPropagation();
+                e.preventDefault();
+
+                const action = dropdownItem.getAttribute("data-action");
+                const itemId = dropdownItem.getAttribute("data-item-id");
+                const callback = dropdownItem.getAttribute("data-callback");
+
+                console.log("🔥 Dropdown item clicked:", {
+                    action,
+                    itemId,
+                    callback,
+                });
+
+                // Close the dropdown
+                const menu = dropdownItem.closest(".dropdown-menu");
+                if (menu) {
+                    menu.classList.add("hidden");
+                }
+
+                // Execute the callback function
+                if (callback && typeof window[callback] === "function") {
+                    console.log("✅ Executing callback:", callback);
+                    window[callback](itemId);
+                } else {
+                    console.error("❌ Callback function not found:", callback);
+                }
+                return;
+            }
+
+            // Click outside - close all dropdowns
+            if (!target.closest(".dropdown-menu")) {
+                document.querySelectorAll(".dropdown-menu").forEach((m) => {
+                    m.classList.add("hidden");
+                });
+            }
+        });
+    }
+</script>
+
+<style>
+    .dropdown-menu {
+        min-width: 12rem;
+    }
+
+    .dropdown-item:first-child {
+        border-top-left-radius: 0.5rem;
+        border-top-right-radius: 0.5rem;
+    }
+
+    .dropdown-item:last-child {
+        border-bottom-left-radius: 0.5rem;
+        border-bottom-right-radius: 0.5rem;
+    }
+</style>

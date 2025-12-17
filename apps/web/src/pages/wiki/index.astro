@@ -1,0 +1,85 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Navigation from "../../components/Navigation.astro";
+
+const API_URL = "http://localhost:3000";
+let pages = [];
+let error = null;
+
+try {
+    const response = await fetch(`${API_URL}/api/wiki`);
+    if (response.ok) {
+        pages = await response.json();
+    } else {
+        error = "Failed to fetch wiki pages";
+    }
+} catch (e) {
+    error = "API connection failed";
+}
+---
+
+<Layout title="Wiki - Allware Wiki">
+    <Navigation title="Allware Wiki" />
+
+    <main class="pt-24 pb-16 min-h-screen">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex justify-between items-center mb-12">
+                <div>
+                    <h1 class="text-5xl font-bold text-gradient mb-4">
+                        Documentation
+                    </h1>
+                    <p class="text-xl text-slate-400">
+                        Knowledge base and internal documentation
+                    </p>
+                </div>
+                <a href="/wiki/new" class="btn-primary">
+                    <svg
+                        class="w-5 h-5 inline-block mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 4v16m8-8H4"
+                        ></path>
+                    </svg>
+                    New Page
+                </a>
+            </div>
+
+            {error ? (
+                <div class="glass-card p-8 border-red-500/50">
+                    <p class="text-red-400">{error}</p>
+                </div>
+            ) : (
+                <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {pages.map((page: any) => (
+                        <a href={`/wiki/${page.slug}`} class="glass-card p-6 hover:bg-slate-800/60 transition-all group">
+                            <h3 class="text-xl font-bold mb-2 group-hover:text-blue-400 transition-colors">
+                                {page.title}
+                            </h3>
+                            <p class="text-sm text-slate-500 mb-4">
+                                Last updated: {new Date(page.updatedAt).toLocaleDateString()}
+                            </p>
+                            <div class="flex items-center text-sm text-blue-400">
+                                Read more
+                                <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </div>
+                        </a>
+                    ))}
+                    
+                    {pages.length === 0 && (
+                        <div class="col-span-full glass-card p-12 text-center">
+                            <p class="text-slate-400">No documentation pages found.</p>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    </main>
+</Layout>

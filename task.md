@@ -1,0 +1,34 @@
+# Allware Wiki Development Tasks
+
+- [x] **Project Initialization** <!-- id: 0 -->
+    - [x] Setup Monorepo (npm workspaces) <!-- id: 1 -->
+    - [x] Create `apps/api` (Hono) and `apps/web` (Astro) <!-- id: 2 -->
+    - [x] Configure Docker and Docker Compose <!-- id: 3 -->
+    - [x] Configure Vitest for TDD <!-- id: 4 -->
+- [x] **Backend Core (TDD)** <!-- id: 5 -->
+    - [x] [TEST] Write tests for Standard/Control creation <!-- id: 6 -->
+    - [x] Implement Drizzle Schema (Standards, Controls, Users) <!-- id: 7 -->
+    - [x] Implement Repository/Service layers <!-- id: 8 -->
+    - [x] Implement API Controllers <!-- id: 9 -->
+- [x] **Authentication** <!-- id: 8 -->
+    - [x] Configure Google OAuth <!-- id: 9 -->
+    - [x] Implement Auth Middleware <!-- id: 10 -->
+- [x] **Google Drive Integration** <!-- id: 11 -->
+    - [x] Set up Google Drive API client <!-- id: 12 -->
+    - [x] Implement file upload and sync logic <!-- id: 13 -->
+- [x] **Feature: CIS Controls & Audit** <!-- id: 14 -->
+    - [x] Create data models for CIS Controls <!-- id: 15 -->
+    - [x] Build Dashboard for tracking progress <!-- id: 16 -->
+    - [x] Implement evidence upload linked to controls <!-- id: 17 -->
+- [/] **Feature: Wiki & Documentation** <!-- id: 18 -->
+    - [x] Build Wiki interface (Markdown/Rich Text) <!-- id: 19 -->
+    - [ ] Integrate with Google Docs for editing <!-- id: 20 -->
+    - [ ] Link Wiki Pages to Controls <!-- id: 26 -->
+- [ ] **Feature: Core Business Logic** <!-- id: 27 -->
+    - [ ] Implement Standards & Controls Management <!-- id: 28 -->
+    - [ ] Implement Tagging System <!-- id: 29 -->
+    - [ ] Implement Evidence Text Extraction <!-- id: 30 -->
+- [ ] **UI/UX Polish** <!-- id: 23 -->
+    - [ ] Implement Sidebar Navigation <!-- id: 31 -->
+    - [ ] Implement Light/Dark Mode Toggle <!-- id: 32 -->
+    - [ ] Ensure responsive and premium design <!-- id: 25 -->

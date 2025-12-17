@@ -1,0 +1,791 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Modal from "../components/Modal.astro";
+import EvidenceTypeSelector from "../components/EvidenceTypeSelector.astro";
+import EvidenceForm from "../components/EvidenceForm.astro";
+import DropdownMenu from "../components/DropdownMenu.astro";
+
+import { serverFetch } from "../utils/api";
+
+// API_URL handled by serverFetch
+
+// Get controlId from URL query params (when coming from control detail page)
+const url = new URL(Astro.request.url);
+const preselectedControlId = url.searchParams.get("controlId") || "";
+
+let evidenceList = [];
+let controls = [];
+let error = null;
+
+try {
+    const response = await serverFetch(Astro, "/api/evidence");
+    if (response.ok) {
+        evidenceList = await response.json();
+    } else {
+        error = "Failed to fetch evidence";
+    }
+
+    // Fetch controls for the dropdown selector
+    const controlsResponse = await serverFetch(Astro, "/api/controls");
+    if (controlsResponse.ok) {
+        controls = await controlsResponse.json();
+    }
+} catch (e) {
+    error = "API connection failed";
+}
+
+// Category display config
+const categoryIcons: Record<string, string> = {
+    DOCUMENT: "📘",
+    CONFIGURATION: "🛡️",
+    PROCESS: "📊",
+};
+
+const categoryColors: Record<string, string> = {
+    DOCUMENT: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    CONFIGURATION: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+    PROCESS: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+};
+
+const categoryLabels: Record<string, string> = {
+    DOCUMENT: "Documento",
+    CONFIGURATION: "Configuración",
+    PROCESS: "Proceso",
+};
+---
+
+<Layout title="Evidence - Allware Wiki">
+    <div class="pt-6 md:pt-8 pb-16 min-h-screen px-4 md:px-6">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <div
+                class="mb-8 md:mb-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+            >
+                <div>
+                    <h1
+                        class="text-3xl md:text-5xl font-bold text-gradient mb-2 md:mb-4"
+                    >
+                        Evidencias
+                    </h1>
+                    <p class="text-base md:text-xl text-slate-400">
+                        Gestiona las evidencias de cumplimiento
+                    </p>
+                </div>
+                <button
+                    id="openUploadModal"
+                    class="btn-primary w-full sm:w-auto flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                >
+                    <svg
+                        class="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Nueva Evidencia
+                </button>
+            </div>
+
+            <!-- Filter by Category -->
+            <div class="flex flex-wrap gap-2 md:gap-3 mb-6 md:mb-8">
+                <button class="filter-btn active" data-filter="all">
+                    Todas
+                </button>
+                <button class="filter-btn" data-filter="DOCUMENT">
+                    📘 Documentos
+                </button>
+                <button class="filter-btn" data-filter="CONFIGURATION">
+                    🛡️ Configuraciones
+                </button>
+                <button class="filter-btn" data-filter="PROCESS">
+                    📊 Procesos
+                </button>
+            </div>
+
+            {
+                error ? (
+                    <div class="glass-card p-6 md:p-8 border-red-500/50">
+                        <div class="flex items-center space-x-3">
+                            <svg
+                                class="w-6 h-6 text-red-400 flex-shrink-0"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                            </svg>
+                            <span class="text-red-400">{error}</span>
+                        </div>
+                    </div>
+                ) : (
+                    <div class="grid gap-3 md:gap-4" id="evidenceGrid">
+                        {evidenceList.map((item: any) => (
+                            <div
+                                class="evidence-item glass-card p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-800/60 transition-colors relative"
+                                data-category={item.category}
+                            >
+                                <div class="flex items-start sm:items-center gap-3 md:gap-4 flex-1 min-w-0">
+                                    <div
+                                        class={`w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center text-xl md:text-2xl flex-shrink-0 ${categoryColors[item.category] || "bg-slate-500/20"}`}
+                                    >
+                                        {categoryIcons[item.category] || "📄"}
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex flex-wrap items-center gap-2 mb-1">
+                                            <h3 class="text-base md:text-lg font-bold truncate">
+                                                {item.name}
+                                            </h3>
+                                            <span
+                                                class={`text-xs px-2 py-0.5 rounded-full border whitespace-nowrap ${categoryColors[item.category] || ""}`}
+                                            >
+                                                {categoryLabels[
+                                                    item.category
+                                                ] || "N/A"}
+                                            </span>
+                                            {item.contentType === "TEXT" && (
+                                                <span class="text-xs text-slate-500">
+                                                    ✍️ Texto
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p class="text-slate-400 text-sm line-clamp-2">
+                                            {item.description ||
+                                                "Sin descripción"}
+                                        </p>
+                                        <div class="flex items-center gap-2 mt-2">
+                                            <span class="text-xs text-slate-500">
+                                                {item.createdAt
+                                                    ? new Date(
+                                                          item.createdAt * 1000,
+                                                      ).toLocaleDateString()
+                                                    : "N/A"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    {item.fileUrl && (
+                                        <a
+                                            href={item.fileUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="btn-secondary text-xs py-1.5 px-3 whitespace-nowrap active:scale-95 transition-transform"
+                                        >
+                                            View File
+                                        </a>
+                                    )}
+                                    <DropdownMenu
+                                        itemId={item.id}
+                                        itemType="evidence"
+                                        onDelete="deleteEvidence"
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                        {evidenceList.length === 0 && !error && (
+                            <div class="glass-card p-8 md:p-12 text-center">
+                                <div class="text-5xl md:text-6xl mb-4">📭</div>
+                                <h3 class="text-lg md:text-xl font-semibold text-slate-400 mb-2">
+                                    No hay evidencias
+                                </h3>
+                                <p class="text-slate-500 mb-6">
+                                    Crea tu primera evidencia para comenzar
+                                </p>
+                                <button
+                                    id="emptyStateBtn"
+                                    class="btn-primary active:scale-95 transition-transform"
+                                >
+                                    Crear Primera Evidencia
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )
+            }
+        </div>
+    </div>
+
+    <!-- Modal: Create Evidence -->
+    <Modal id="uploadEvidenceModal" title="Nueva Evidencia" size="xl">
+        <div id="step1">
+            <EvidenceTypeSelector onCategorySelect="handleCategorySelect" />
+        </div>
+        <div id="step2" class="hidden">
+            <!-- Dynamic form that includes control selector -->
+            <form id="evidenceForm" class="space-y-5">
+                <!-- Hidden category field -->
+                <input
+                    type="hidden"
+                    name="category"
+                    id="selectedCategory"
+                    value=""
+                />
+
+                <!-- Category header (updated dynamically) -->
+                <div id="categoryHeader" class="mb-6 flex items-center gap-4">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center"
+                    >
+                        <span id="categoryIcon" class="text-2xl">📘</span>
+                    </div>
+                    <div>
+                        <h3
+                            id="categoryTitle"
+                            class="text-xl font-bold text-white"
+                        >
+                            Documentación
+                        </h3>
+                        <p
+                            id="categoryDescription"
+                            class="text-slate-400 text-sm"
+                        >
+                            Políticas, manuales y normativas
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Evidence Name -->
+                <div>
+                    <label
+                        class="block text-sm font-medium text-slate-300 mb-1"
+                    >
+                        Nombre de la Evidencia *
+                    </label>
+                    <input
+                        type="text"
+                        name="name"
+                        id="evidenceName"
+                        required
+                        class="input-field"
+                        placeholder="ej: Política de Seguridad 2024"
+                    />
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label
+                        class="block text-sm font-medium text-slate-300 mb-1"
+                    >
+                        Descripción
+                    </label>
+                    <textarea
+                        name="description"
+                        id="evidenceDescription"
+                        rows="2"
+                        class="input-field"
+                        placeholder="Breve descripción del contenido"
+                    ></textarea>
+                </div>
+
+                <!-- Content Type Toggle -->
+                <div class="bg-slate-800/50 rounded-lg p-4">
+                    <label
+                        class="block text-sm font-medium text-slate-300 mb-3"
+                    >
+                        Tipo de Contenido *
+                    </label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="radio"
+                                name="contentType"
+                                value="FILE"
+                                checked
+                                class="accent-purple-500"
+                            />
+                            <span class="text-slate-300">📁 Subir Archivo</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="radio"
+                                name="contentType"
+                                value="TEXT"
+                                class="accent-purple-500"
+                            />
+                            <span class="text-slate-300">✍️ Escribir Texto</span
+                            >
+                        </label>
+                    </div>
+                </div>
+
+                <!-- FILE Section -->
+                <div id="fileSection" class="space-y-4">
+                    <div>
+                        <label
+                            class="block text-sm font-medium text-slate-300 mb-1"
+                        >
+                            Archivo
+                        </label>
+                        <div
+                            class="border-2 border-dashed border-slate-600 rounded-xl p-6 text-center hover:border-purple-500/50 transition-colors"
+                        >
+                            <input
+                                type="file"
+                                name="file"
+                                id="fileInput"
+                                class="hidden"
+                            />
+                            <label for="fileInput" class="cursor-pointer">
+                                <div class="text-4xl mb-2">📄</div>
+                                <p class="text-slate-300 font-medium">
+                                    Arrastra tu archivo aquí
+                                </p>
+                                <p class="text-slate-500 text-sm">
+                                    o haz clic para seleccionar
+                                </p>
+                            </label>
+                        </div>
+                        <p
+                            id="fileName"
+                            class="text-sm text-slate-400 mt-2 hidden"
+                        >
+                        </p>
+                    </div>
+                </div>
+
+                <!-- TEXT Section (hidden by default) -->
+                <div id="textSection" class="hidden">
+                    <label
+                        class="block text-sm font-medium text-slate-300 mb-1"
+                    >
+                        Contenido
+                    </label>
+                    <textarea
+                        name="textContent"
+                        id="textContent"
+                        rows="8"
+                        class="input-field"
+                        placeholder="Describe el proceso o escribe la evidencia directamente..."
+                    ></textarea>
+                </div>
+
+                <!-- Control Selector -->
+                <div class="bg-slate-800/30 rounded-lg p-4">
+                    <label
+                        class="block text-sm font-medium text-slate-300 mb-1"
+                    >
+                        Vincular a Control (opcional)
+                    </label>
+                    <select
+                        name="controlId"
+                        id="controlSelector"
+                        class="input-field"
+                    >
+                        <option value="">Sin vincular a control</option>
+                        {
+                            controls.map((control: any) => (
+                                <option
+                                    value={control.id}
+                                    selected={
+                                        control.id === preselectedControlId
+                                    }
+                                >
+                                    {control.code} - {control.title}
+                                </option>
+                            ))
+                        }
+                    </select>
+                    {
+                        controls.length === 0 && (
+                            <p class="text-xs text-amber-400 mt-1">
+                                ⚠️ No hay controles disponibles. Crea un control
+                                primero.
+                            </p>
+                        )
+                    }
+                    <textarea
+                        name="contextNote"
+                        id="contextNote"
+                        rows="2"
+                        class="input-field mt-2"
+                        placeholder="¿Por qué esta evidencia aplica para este control?"
+                    ></textarea>
+                </div>
+
+                <!-- Actions -->
+                <div
+                    class="flex justify-between items-center pt-4 border-t border-slate-700"
+                >
+                    <button
+                        type="button"
+                        id="backBtn"
+                        class="text-slate-400 hover:text-white transition-colors"
+                    >
+                        ← Cambiar categoría
+                    </button>
+                    <button type="submit" id="submitBtn" class="btn-primary">
+                        Guardar Evidencia
+                    </button>
+                </div>
+            </form>
+        </div>
+    </Modal>
+
+    <!-- Hidden data for JavaScript -->
+    <script
+        id="evidencePageData"
+        type="application/json"
+        set:html={JSON.stringify({
+            preselectedControlId,
+            controls: controls.map((c: any) => ({
+                id: c.id,
+                code: c.code,
+                title: c.title,
+            })),
+        })}
+    />
+
+    <!-- Toast notification -->
+    <div
+        id="toast"
+        class="fixed bottom-4 right-4 bg-slate-800 border border-slate-700 rounded-lg shadow-xl px-4 py-3 transform translate-y-20 opacity-0 transition-all duration-300 z-50"
+    >
+        <div class="flex items-center gap-3">
+            <span id="toast-icon" class="text-xl">✅</span>
+            <span id="toast-message" class="text-sm text-slate-200"
+                >Operación exitosa</span
+            >
+        </div>
+    </div>
+</Layout>
+
+<style>
+    .filter-btn {
+        @apply px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium text-slate-400 bg-slate-800/50 border border-slate-700/50 transition-all active:scale-95;
+    }
+    .filter-btn:hover {
+        @apply text-white border-slate-600;
+    }
+    .filter-btn.active {
+        @apply text-purple-400 border-purple-500/50 bg-purple-500/10;
+    }
+
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>
+
+<script>
+    const API_URL = "http://localhost:3000";
+
+    // Toast helper
+    function showToast(message: string, icon = "✅") {
+        const toast = document.getElementById("toast");
+        const toastMessage = document.getElementById("toast-message");
+        const toastIcon = document.getElementById("toast-icon");
+
+        if (toast && toastMessage && toastIcon) {
+            toastMessage.textContent = message;
+            toastIcon.textContent = icon;
+            toast.classList.remove("translate-y-20", "opacity-0");
+
+            setTimeout(() => {
+                toast.classList.add("translate-y-20", "opacity-0");
+            }, 3000);
+        }
+    }
+
+    // Modal State
+    let selectedCategory: string | null = null;
+
+    // Get preselected data from hidden script
+    let pageData = { preselectedControlId: "", controls: [] };
+    try {
+        const dataScript = document.getElementById("evidencePageData");
+        if (dataScript) {
+            pageData = JSON.parse(dataScript.textContent || "{}");
+            console.log("📋 Page data loaded:", pageData);
+        }
+    } catch (e) {
+        console.warn("Could not parse page data:", e);
+    }
+
+    // Open Modal - both buttons
+    function openCreateModal() {
+        selectedCategory = null;
+        showStep1();
+
+        // Pre-select control if coming from control page
+        if (pageData.preselectedControlId) {
+            const controlSelector = document.getElementById(
+                "controlSelector",
+            ) as HTMLSelectElement;
+            if (controlSelector) {
+                controlSelector.value = pageData.preselectedControlId;
+                console.log(
+                    "✅ Pre-selected control:",
+                    pageData.preselectedControlId,
+                );
+            }
+        }
+
+        const openModalFn = (window as any).openModal_uploadEvidenceModal;
+        if (typeof openModalFn === "function") {
+            openModalFn();
+        } else {
+            showToast("Modal no disponible", "❌");
+        }
+    }
+
+    const openBtn = document.getElementById("openUploadModal");
+    openBtn?.addEventListener("click", openCreateModal);
+
+    const emptyBtn = document.getElementById("emptyStateBtn");
+    emptyBtn?.addEventListener("click", openCreateModal);
+
+    // Category Selection Handler
+    (window as any).handleCategorySelect = (category: string) => {
+        selectedCategory = category;
+        showStep2(category);
+        showToast(
+            `Categoría seleccionada: ${category}`,
+            categoryIcons[category] || "✅",
+        );
+    };
+
+    const categoryIcons: Record<string, string> = {
+        DOCUMENT: "📘",
+        CONFIGURATION: "🛡️",
+        PROCESS: "📊",
+    };
+
+    function showStep1() {
+        document.getElementById("step1")?.classList.remove("hidden");
+        document.getElementById("step2")?.classList.add("hidden");
+    }
+
+    function showStep2(category: string) {
+        document.getElementById("step1")?.classList.add("hidden");
+        const step2 = document.getElementById("step2");
+        if (step2) {
+            step2.classList.remove("hidden");
+
+            // Update hidden category field
+            const categoryInput = document.getElementById(
+                "selectedCategory",
+            ) as HTMLInputElement;
+            if (categoryInput) categoryInput.value = category;
+
+            // Category config for UI
+            const categoryConfig: Record<
+                string,
+                { icon: string; title: string; description: string }
+            > = {
+                DOCUMENT: {
+                    icon: "📘",
+                    title: "Documentación Corporativa",
+                    description: "Políticas, manuales y normativas",
+                },
+                CONFIGURATION: {
+                    icon: "🛡️",
+                    title: "Configuración Técnica",
+                    description:
+                        "Configuraciones de sistemas y evidencia técnica",
+                },
+                PROCESS: {
+                    icon: "📊",
+                    title: "Procesos y Registros",
+                    description:
+                        "Planillas, checklists y descripciones de proceso",
+                },
+            };
+
+            const config = categoryConfig[category];
+            if (config) {
+                const iconEl = document.getElementById("categoryIcon");
+                const titleEl = document.getElementById("categoryTitle");
+                const descEl = document.getElementById("categoryDescription");
+
+                if (iconEl) iconEl.textContent = config.icon;
+                if (titleEl) titleEl.textContent = config.title;
+                if (descEl) descEl.textContent = config.description;
+            }
+        }
+    }
+
+    // Back Button
+    document.getElementById("backBtn")?.addEventListener("click", () => {
+        showStep1();
+        showToast("Selecciona una categoría", "👆");
+    });
+
+    // Content Type Toggle (FILE / TEXT)
+    const contentTypeRadios = document.querySelectorAll(
+        'input[name="contentType"]',
+    );
+    const fileSection = document.getElementById("fileSection");
+    const textSection = document.getElementById("textSection");
+
+    contentTypeRadios.forEach((radio) => {
+        radio.addEventListener("change", (e) => {
+            const target = e.target as HTMLInputElement;
+            if (target.value === "FILE") {
+                fileSection?.classList.remove("hidden");
+                textSection?.classList.add("hidden");
+            } else {
+                fileSection?.classList.add("hidden");
+                textSection?.classList.remove("hidden");
+            }
+        });
+    });
+
+    // File Input Display
+    const fileInput = document.getElementById("fileInput") as HTMLInputElement;
+    const fileName = document.getElementById("fileName");
+
+    fileInput?.addEventListener("change", () => {
+        if (fileInput.files && fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            if (fileName) {
+                fileName.textContent = `📎 ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+                fileName.classList.remove("hidden");
+            }
+        }
+    });
+
+    // Form Submit
+    const form = document.getElementById("evidenceForm") as HTMLFormElement;
+    form?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const submitBtn = form.querySelector(
+            'button[type="submit"]',
+        ) as HTMLButtonElement;
+        const originalText = submitBtn?.textContent || "Guardar";
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Guardando...";
+        }
+
+        const formData = new FormData(form);
+
+        // Debug: Log all form data being sent
+        console.log("📤 Submitting evidence form:");
+        for (const [key, value] of formData.entries()) {
+            if (value instanceof File) {
+                console.log(
+                    `  ${key}: File(${value.name}, ${value.size} bytes)`,
+                );
+            } else {
+                console.log(`  ${key}: ${value}`);
+            }
+        }
+
+        // Validate required fields
+        const category = formData.get("category");
+        const name = formData.get("name");
+        const contentType = formData.get("contentType");
+
+        if (!category || !name || !contentType) {
+            showToast("Por favor completa todos los campos requeridos", "❌");
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+            return;
+        }
+
+        try {
+            console.log(`📡 Sending POST to ${API_URL}/api/evidence`);
+            const response = await fetch(`${API_URL}/api/evidence`, {
+                method: "POST",
+                body: formData,
+            });
+
+            console.log(`📥 Response status: ${response.status}`);
+            const responseData = await response.json();
+            console.log("📥 Response data:", responseData);
+
+            if (response.ok) {
+                showToast("Evidencia creada exitosamente", "✅");
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast(responseData.error || "Error al guardar", "❌");
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                }
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            showToast("Error de conexión", "❌");
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        }
+    });
+
+    // Delete evidence
+    (window as any).deleteEvidence = async (id: string) => {
+        if (
+            !confirm(
+                "Are you sure you want to delete this evidence? This action cannot be undone.",
+            )
+        ) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/api/evidence/${id}`, {
+                method: "DELETE",
+            });
+
+            if (response.ok) {
+                showToast("Evidence deleted successfully", "✅");
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                const err = await response.json();
+                showToast(err.error || "Failed to delete evidence", "❌");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            showToast("Connection error", "❌");
+        }
+    };
+
+    // Filter functionality with feedback
+    document.querySelectorAll(".filter-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const filter = btn.getAttribute("data-filter");
+
+            // Update active state
+            document
+                .querySelectorAll(".filter-btn")
+                .forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            // Filter items
+            let visibleCount = 0;
+            document.querySelectorAll(".evidence-item").forEach((item) => {
+                const itemCategory = item.getAttribute("data-category");
+                if (filter === "all" || itemCategory === filter) {
+                    (item as HTMLElement).style.display = "";
+                    visibleCount++;
+                } else {
+                    (item as HTMLElement).style.display = "none";
+                }
+            });
+
+            // Show toast with result
+            const filterName =
+                filter === "all" ? "todas" : filter?.toLowerCase();
+            showToast(`Mostrando ${visibleCount} evidencia(s)`, "🔍");
+        });
+    });
+</script>

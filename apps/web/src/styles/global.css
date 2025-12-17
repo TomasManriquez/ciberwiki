@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Brand Colors - Premium Purple/Blue Theme */
+    --color-primary: 168 85% 60%;
+    --color-primary-dark: 168 85% 50%;
+    --color-secondary: 220 90% 56%;
+    --color-accent: 280 100% 70%;
+    
+    /* Background */
+    --color-bg-primary: 222 47% 11%;
+    --color-bg-secondary: 217 33% 17%;
+    --color-bg-tertiary: 215 28% 22%;
+    
+    /* Text */
+    --color-text-primary: 0 0% 98%;
+    --color-text-secondary: 220 9% 65%;
+    --color-text-muted: 218 11% 46%;
+    
+    /* Status Colors */
+    --color-success: 142 76% 36%;
+    --color-warning: 45 93% 47%;
+    --color-error: 0 72% 51%;
+    --color-info: 199 89% 48%;
+  }
+
+  /* Light Mode */
+  .light-mode {
+    --color-bg-primary: 210 40% 98%;
+    --color-bg-secondary: 210 40% 96%;
+    --color-bg-tertiary: 210 20% 92%;
+    --color-text-primary: 222 47% 11%;
+    --color-text-secondary: 215 25% 35%;
+    --color-text-muted: 215 15% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-slate-700/50;
+  }
+  
+  body {
+    @apply bg-slate-900 text-slate-50 antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
+  }
+}
+
+@layer components {
+  /* Glassmorphism Card */
+  .glass-card {
+    @apply bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl;
+  }
+  
+  /* Premium Button */
+  .btn-primary {
+    @apply px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600
+           text-white font-semibold rounded-lg
+           hover:from-purple-700 hover:to-blue-700
+           transition-all duration-300 ease-out
+           shadow-lg hover:shadow-purple-500/50
+           transform hover:-translate-y-0.5;
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-3 bg-slate-700/50 backdrop-blur text-slate-100
+           font-semibold rounded-lg border border-slate-600
+           hover:bg-slate-600/50 hover:border-slate-500
+           transition-all duration-300;
+  }
+  
+  /* Input Fields */
+  .input-field {
+    @apply w-full px-4 py-3 bg-slate-800/50 border border-slate-700
+           rounded-lg text-slate-100 placeholder-slate-500
+           focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500
+           transition-all duration-200;
+  }
+  
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+  }
+  
+  .badge-success {
+    @apply bg-green-500/10 text-green-400 border border-green-500/20;
+  }
+  
+  .badge-warning {
+    @apply bg-yellow-500/10 text-yellow-400 border border-yellow-500/20;
+  }
+  
+  .badge-error {
+    @apply bg-red-500/10 text-red-400 border border-red-500/20;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-400;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

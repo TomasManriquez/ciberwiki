@@ -1,0 +1,124 @@
+---
+interface Props {
+    id: string;
+    title: string;
+    size?: "sm" | "md" | "lg" | "xl" | "full";
+}
+
+const { id, title, size = "md" } = Astro.props;
+
+const sizeClasses = {
+    sm: "max-w-sm",
+    md: "max-w-lg",
+    lg: "max-w-2xl",
+    xl: "max-w-4xl",
+    full: "max-w-6xl",
+};
+---
+
+<div
+    id={id}
+    class="fixed inset-0 z-50 hidden opacity-0 transition-opacity duration-300"
+    role="dialog"
+    aria-modal="true"
+>
+    <!-- Backdrop -->
+    <div
+        class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm cursor-pointer"
+        data-close-modal
+    >
+    </div>
+
+    <!-- Modal Panel -->
+    <div class="absolute inset-0 flex items-center justify-center p-4 md:p-8">
+        <div
+            class={`glass-card w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto transform scale-95 opacity-0 transition-all duration-300`}
+            data-modal-panel
+        >
+            <!-- Header -->
+            <div
+                class="flex items-center justify-between p-4 md:p-6 border-b border-slate-700/50 sticky top-0 bg-slate-800/95 backdrop-blur-sm z-10"
+            >
+                <h3 class="text-lg md:text-xl font-bold text-white">{title}</h3>
+                <button
+                    class="text-slate-400 hover:text-white transition-colors p-2 hover:bg-slate-700/50 rounded-lg"
+                    data-close-modal
+                    aria-label="Cerrar"
+                >
+                    <svg
+                        class="w-5 h-5 md:w-6 md:h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Content -->
+            <div class="p-4 md:p-6">
+                <slot />
+            </div>
+        </div>
+    </div>
+</div>
+
+<script define:vars={{ id }}>
+    const modal = document.getElementById(id);
+    if (modal) {
+        const panel = modal.querySelector("[data-modal-panel]");
+        const closeButtons = modal.querySelectorAll("[data-close-modal]");
+
+        function openModal() {
+            modal.classList.remove("hidden");
+            document.body.style.overflow = "hidden"; // Prevent background scroll
+            // Trigger reflow
+            void modal.offsetWidth;
+            modal.classList.remove("opacity-0");
+            panel.classList.remove("scale-95", "opacity-0");
+            panel.classList.add("scale-100", "opacity-100");
+        }
+
+        function closeModal() {
+            modal.classList.add("opacity-0");
+            panel.classList.remove("scale-100", "opacity-100");
+            panel.classList.add("scale-95", "opacity-0");
+            document.body.style.overflow = ""; // Restore scroll
+
+            setTimeout(() => {
+                modal.classList.add("hidden");
+            }, 300);
+        }
+
+        // Expose to global scope for other scripts to use
+        window[`openModal_${id}`] = openModal;
+        window[`closeModal_${id}`] = closeModal;
+
+        closeButtons.forEach((btn) =>
+            btn.addEventListener("click", (e) => {
+                // Only close if clicking directly on backdrop, not on panel content
+                if (
+                    (btn.hasAttribute("data-close-modal") &&
+                        !btn
+                            .closest("[data-modal-panel]")
+                            ?.contains(e.target)) ||
+                    btn.tagName === "BUTTON"
+                ) {
+                    closeModal();
+                }
+            }),
+        );
+
+        // Close on Escape key
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+                closeModal();
+            }
+        });
+    }
+</script>

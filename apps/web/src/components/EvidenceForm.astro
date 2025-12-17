@@ -1,0 +1,231 @@
+---
+// EvidenceForm.astro - Form for creating evidence based on selected category
+interface Props {
+    category?: "DOCUMENT" | "CONFIGURATION" | "PROCESS";
+}
+
+const { category } = Astro.props;
+
+const categoryConfig = {
+    DOCUMENT: {
+        title: "Documentación Corporativa",
+        icon: "📘",
+        description: "Políticas, manuales y normativas",
+        fields: ["file", "version", "validFrom"],
+        acceptTypes: ".pdf,.doc,.docx,.odt",
+    },
+    CONFIGURATION: {
+        title: "Configuración Técnica",
+        icon: "🛡️",
+        description: "Configuraciones de sistemas y evidencia técnica",
+        fields: ["file", "snippet", "command"],
+        acceptTypes: ".png,.jpg,.jpeg,.gif,.log,.txt,.json,.xml,.yaml,.yml",
+    },
+    PROCESS: {
+        title: "Procesos y Registros",
+        icon: "📊",
+        description: "Planillas, checklists y descripciones de proceso",
+        fields: ["file", "textContent"],
+        acceptTypes: ".xlsx,.xls,.csv,.pdf",
+    },
+};
+
+const config = category ? categoryConfig[category] : null;
+---
+
+<div class="evidence-form">
+    {
+        config && (
+            <div class="mb-6 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+                    <span class="text-2xl">{config.icon}</span>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white">{config.title}</h3>
+                    <p class="text-slate-400 text-sm">{config.description}</p>
+                </div>
+            </div>
+        )
+    }
+
+    <form id="evidenceForm" class="space-y-5">
+        <input type="hidden" name="category" value={category || ""} />
+
+        <!-- Common Fields -->
+        <div>
+            <label class="block text-sm font-medium text-slate-300 mb-1"
+                >Nombre de la Evidencia *</label
+            >
+            <input
+                type="text"
+                name="name"
+                required
+                class="input-field"
+                placeholder="ej: Política de Seguridad 2024"
+            />
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-slate-300 mb-1"
+                >Descripción</label
+            >
+            <textarea
+                name="description"
+                rows="2"
+                class="input-field"
+                placeholder="Breve descripción del contenido"></textarea>
+        </div>
+
+        <!-- Content Type Toggle -->
+        <div class="bg-slate-800/50 rounded-lg p-4">
+            <label class="block text-sm font-medium text-slate-300 mb-3"
+                >Tipo de Contenido *</label
+            >
+            <div class="flex gap-4">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input
+                        type="radio"
+                        name="contentType"
+                        value="FILE"
+                        checked
+                        class="accent-purple-500"
+                    />
+                    <span class="text-slate-300">📁 Subir Archivo</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input
+                        type="radio"
+                        name="contentType"
+                        value="TEXT"
+                        class="accent-purple-500"
+                    />
+                    <span class="text-slate-300">✍️ Escribir Texto</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- FILE Section -->
+        <div id="fileSection" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1"
+                    >Archivo</label
+                >
+                <div
+                    class="border-2 border-dashed border-slate-600 rounded-xl p-6 text-center hover:border-purple-500/50 transition-colors"
+                >
+                    <input
+                        type="file"
+                        name="file"
+                        accept={config?.acceptTypes || "*"}
+                        class="hidden"
+                        id="fileInput"
+                    />
+                    <label for="fileInput" class="cursor-pointer">
+                        <div class="text-4xl mb-2">📄</div>
+                        <p class="text-slate-300 font-medium">
+                            Arrastra tu archivo aquí
+                        </p>
+                        <p class="text-slate-500 text-sm">
+                            o haz clic para seleccionar
+                        </p>
+                    </label>
+                </div>
+                <p id="fileName" class="text-sm text-slate-400 mt-2 hidden"></p>
+            </div>
+
+            {
+                category === "CONFIGURATION" && (
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">
+                            Comando/Snippet (opcional)
+                        </label>
+                        <textarea
+                            name="snippet"
+                            rows="3"
+                            class="input-field font-mono text-sm"
+                            placeholder="iptables -L -n -v"
+                        />
+                    </div>
+                )
+            }
+        </div>
+
+        <!-- TEXT Section (hidden by default) -->
+        <div id="textSection" class="hidden">
+            <label class="block text-sm font-medium text-slate-300 mb-1"
+                >Contenido</label
+            >
+            <textarea
+                name="textContent"
+                rows="8"
+                class="input-field"
+                placeholder="Describe el proceso o escribe la evidencia directamente..."
+            ></textarea>
+        </div>
+
+        <!-- Optional: Link to Control -->
+        <div class="bg-slate-800/30 rounded-lg p-4">
+            <label class="block text-sm font-medium text-slate-300 mb-1"
+                >Vincular a Control (opcional)</label
+            >
+            <input
+                type="text"
+                name="controlId"
+                class="input-field"
+                placeholder="ID del control (ej: ctrl-123)"
+            />
+            <textarea
+                name="contextNote"
+                rows="2"
+                class="input-field mt-2"
+                placeholder="¿Por qué esta evidencia aplica para este control?"
+            ></textarea>
+        </div>
+
+        <!-- Actions -->
+        <div
+            class="flex justify-between items-center pt-4 border-t border-slate-700"
+        >
+            <button
+                type="button"
+                id="backBtn"
+                class="text-slate-400 hover:text-white transition-colors"
+            >
+                ← Cambiar categoría
+            </button>
+            <button type="submit" class="btn-primary">
+                Guardar Evidencia
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Toggle FILE/TEXT sections
+    document.querySelectorAll('input[name="contentType"]').forEach((radio) => {
+        radio.addEventListener("change", (e) => {
+            const target = e.target as HTMLInputElement;
+            const fileSection = document.getElementById("fileSection");
+            const textSection = document.getElementById("textSection");
+
+            if (target.value === "FILE") {
+                fileSection?.classList.remove("hidden");
+                textSection?.classList.add("hidden");
+            } else {
+                fileSection?.classList.add("hidden");
+                textSection?.classList.remove("hidden");
+            }
+        });
+    });
+
+    // File input display
+    const fileInput = document.getElementById("fileInput") as HTMLInputElement;
+    const fileNameDisplay = document.getElementById("fileName");
+
+    fileInput?.addEventListener("change", () => {
+        if (fileInput.files?.length && fileNameDisplay) {
+            fileNameDisplay.textContent = `📎 ${fileInput.files[0].name}`;
+            fileNameDisplay.classList.remove("hidden");
+        }
+    });
+</script>

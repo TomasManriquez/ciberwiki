@@ -1,0 +1,474 @@
+---
+// Sidebar.astro - Collapsible navigation sidebar with mobile support
+const currentPath = Astro.url.pathname;
+
+interface NavItem {
+    label: string;
+    href: string;
+    icon: string;
+}
+
+const navItems: NavItem[] = [
+    { label: "Dashboard", href: "/", icon: "🏠" },
+    { label: "Standards", href: "/standards", icon: "📋" },
+    { label: "Controls", href: "/controls", icon: "🎯" },
+    { label: "Evidence", href: "/evidence", icon: "📎" },
+    { label: "Wiki", href: "/wiki", icon: "📖" },
+    { label: "Settings", href: "/settings", icon: "⚙️" },
+];
+---
+
+<!-- Mobile Header (visible only on mobile) -->
+<header class="mobile-header lg:hidden">
+    <button
+        id="mobile-menu-btn"
+        class="mobile-menu-btn"
+        aria-label="Abrir menú"
+    >
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+        >
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+    </button>
+    <div class="mobile-logo">
+        <span class="logo-icon">🛡️</span>
+        <span class="logo-text">Allware Wiki</span>
+    </div>
+    <div class="w-10"></div>
+    <!-- Spacer for centering -->
+</header>
+
+<!-- Sidebar -->
+<aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+        <div class="logo">
+            <span class="logo-icon">🛡️</span>
+            <span class="logo-text">Allware Wiki</span>
+        </div>
+        <button
+            id="sidebar-toggle"
+            class="sidebar-toggle"
+            aria-label="Colapsar barra lateral"
+        >
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+    </div>
+
+    <nav class="sidebar-nav">
+        {
+            navItems.map((item) => (
+                <a
+                    href={item.href}
+                    class={`nav-item ${currentPath === item.href ? "active" : ""}`}
+                >
+                    <span class="nav-icon">{item.icon}</span>
+                    <span class="nav-label">{item.label}</span>
+                </a>
+            ))
+        }
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="theme-toggle-wrapper">
+            <button
+                id="theme-toggle"
+                class="theme-toggle"
+                aria-label="Cambiar tema"
+            >
+                <span class="theme-icon light">☀️</span>
+                <span class="theme-icon dark">🌙</span>
+            </button>
+            <span class="theme-label">Cambiar Tema</span>
+        </div>
+    </div>
+</aside>
+
+<!-- Mobile Overlay -->
+<div id="sidebar-overlay" class="sidebar-overlay lg:hidden"></div>
+
+<style>
+    /* Mobile Header */
+    .mobile-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 1rem;
+        z-index: 40;
+    }
+
+    .mobile-menu-btn {
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        transition: all 0.2s ease;
+    }
+
+    .mobile-menu-btn:hover,
+    .mobile-menu-btn:active {
+        background: rgba(148, 163, 184, 0.1);
+        color: #f8fafc;
+    }
+
+    .mobile-logo {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .mobile-logo .logo-icon {
+        font-size: 1.25rem;
+    }
+
+    .mobile-logo .logo-text {
+        font-size: 1rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #a78bfa, #818cf8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* Sidebar */
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100vh;
+        width: 260px;
+        background: rgba(15, 23, 42, 0.98);
+        backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(148, 163, 184, 0.1);
+        display: flex;
+        flex-direction: column;
+        transition:
+            width 0.3s ease,
+            transform 0.3s ease;
+        z-index: 50;
+    }
+
+    /* Mobile: hidden by default, slide in when open */
+    @media (max-width: 1023px) {
+        .sidebar {
+            transform: translateX(-100%);
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+    }
+
+    /* Desktop: collapse behavior */
+    @media (min-width: 1024px) {
+        .sidebar.collapsed {
+            width: 70px;
+        }
+
+        .sidebar.collapsed .logo-text,
+        .sidebar.collapsed .nav-label,
+        .sidebar.collapsed .theme-label {
+            opacity: 0;
+            visibility: hidden;
+            width: 0;
+        }
+    }
+
+    .sidebar-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    .logo {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .logo-icon {
+        font-size: 1.5rem;
+    }
+
+    .logo-text {
+        font-size: 1.125rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #a78bfa, #818cf8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        transition:
+            opacity 0.3s ease,
+            width 0.3s ease;
+    }
+
+    .sidebar-toggle {
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        transition: all 0.2s ease;
+    }
+
+    .sidebar-toggle:hover {
+        background: rgba(148, 163, 184, 0.1);
+        color: #f8fafc;
+    }
+
+    .sidebar-nav {
+        flex: 1;
+        padding: 1rem 0.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        overflow-y: auto;
+    }
+
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem;
+        color: #94a3b8;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .nav-item:hover {
+        background: rgba(148, 163, 184, 0.1);
+        color: #f8fafc;
+    }
+
+    .nav-item:active {
+        transform: scale(0.98);
+    }
+
+    .nav-item.active {
+        background: linear-gradient(
+            135deg,
+            rgba(167, 139, 250, 0.2),
+            rgba(129, 140, 248, 0.2)
+        );
+        color: #a78bfa;
+        border: 1px solid rgba(167, 139, 250, 0.3);
+    }
+
+    .nav-icon {
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .nav-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition:
+            opacity 0.3s ease,
+            width 0.3s ease;
+    }
+
+    .sidebar-footer {
+        padding: 1rem;
+        border-top: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    .theme-toggle-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem;
+    }
+
+    .theme-toggle {
+        background: rgba(148, 163, 184, 0.1);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 9999px;
+        width: 44px;
+        height: 24px;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    .theme-toggle:hover {
+        border-color: rgba(167, 139, 250, 0.5);
+    }
+
+    .theme-toggle:active {
+        transform: scale(0.95);
+    }
+
+    .theme-icon {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.75rem;
+        transition: opacity 0.3s ease;
+    }
+
+    .theme-icon.light {
+        left: 4px;
+        opacity: 0;
+    }
+
+    .theme-icon.dark {
+        right: 4px;
+        opacity: 1;
+    }
+
+    :global(.light-mode) .theme-icon.light {
+        opacity: 1;
+    }
+
+    :global(.light-mode) .theme-icon.dark {
+        opacity: 0;
+    }
+
+    .theme-label {
+        font-size: 0.875rem;
+        color: #94a3b8;
+        transition:
+            opacity 0.3s ease,
+            width 0.3s ease;
+    }
+
+    /* Overlay for mobile */
+    .sidebar-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 45;
+        opacity: 0;
+        visibility: hidden;
+        transition:
+            opacity 0.3s ease,
+            visibility 0.3s ease;
+    }
+
+    .sidebar-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* Add padding for mobile header */
+    @media (max-width: 1023px) {
+        :global(main) {
+            padding-top: 70px !important;
+        }
+    }
+</style>
+
+<script>
+    const sidebar = document.getElementById("sidebar");
+    const sidebarToggle = document.getElementById("sidebar-toggle");
+    const mobileMenuBtn = document.getElementById("mobile-menu-btn");
+    const overlay = document.getElementById("sidebar-overlay");
+
+    // Desktop: Toggle collapse
+    sidebarToggle?.addEventListener("click", () => {
+        if (window.innerWidth >= 1024) {
+            sidebar?.classList.toggle("collapsed");
+            const isCollapsed = sidebar?.classList.contains("collapsed");
+            localStorage.setItem(
+                "sidebar-collapsed",
+                isCollapsed ? "true" : "false",
+            );
+            document.documentElement.classList.toggle(
+                "sidebar-is-collapsed",
+                isCollapsed,
+            );
+        } else {
+            // Mobile: close sidebar
+            closeMobileSidebar();
+        }
+    });
+
+    // Mobile: Open sidebar
+    mobileMenuBtn?.addEventListener("click", () => {
+        sidebar?.classList.add("open");
+        overlay?.classList.add("visible");
+        document.body.style.overflow = "hidden";
+    });
+
+    // Mobile: Close sidebar
+    function closeMobileSidebar() {
+        sidebar?.classList.remove("open");
+        overlay?.classList.remove("visible");
+        document.body.style.overflow = "";
+    }
+
+    overlay?.addEventListener("click", closeMobileSidebar);
+
+    // Close on navigation (mobile)
+    document.querySelectorAll(".nav-item").forEach((item) => {
+        item.addEventListener("click", () => {
+            if (window.innerWidth < 1024) {
+                closeMobileSidebar();
+            }
+        });
+    });
+
+    // Restore sidebar state (desktop only)
+    if (
+        window.innerWidth >= 1024 &&
+        localStorage.getItem("sidebar-collapsed") === "true"
+    ) {
+        sidebar?.classList.add("collapsed");
+        document.documentElement.classList.add("sidebar-is-collapsed");
+    }
+
+    // Theme toggle
+    const themeToggle = document.getElementById("theme-toggle");
+
+    themeToggle?.addEventListener("click", () => {
+        document.documentElement.classList.toggle("light-mode");
+        const isLight =
+            document.documentElement.classList.contains("light-mode");
+        localStorage.setItem("theme", isLight ? "light" : "dark");
+    });
+
+    // Restore theme
+    if (localStorage.getItem("theme") === "light") {
+        document.documentElement.classList.add("light-mode");
+    }
+</script>

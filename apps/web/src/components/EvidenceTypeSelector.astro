@@ -1,0 +1,135 @@
+---
+// EvidenceTypeSelector.astro - Didactic category selection for evidence creation
+interface Props {
+    onCategorySelect?: string; // JS function name to call
+}
+
+const { onCategorySelect = "handleCategorySelect" } = Astro.props;
+
+const categories = [
+    {
+        id: "DOCUMENT",
+        icon: "📘",
+        title: "Documentación",
+        subtitle: "Políticas & Manuales",
+        examples: [
+            "Políticas de seguridad",
+            "Manuales operativos",
+            "Normativas internas",
+        ],
+        color: "from-blue-600 to-indigo-600",
+        borderColor: "border-blue-500/30",
+        hoverColor: "hover:border-blue-500/60",
+    },
+    {
+        id: "CONFIGURATION",
+        icon: "🛡️",
+        title: "Configuración",
+        subtitle: "Técnica & Sistemas",
+        examples: [
+            "Reglas de firewall",
+            "Screenshots de config",
+            "Logs del sistema",
+        ],
+        color: "from-emerald-600 to-teal-600",
+        borderColor: "border-emerald-500/30",
+        hoverColor: "hover:border-emerald-500/60",
+    },
+    {
+        id: "PROCESS",
+        icon: "📊",
+        title: "Procesos",
+        subtitle: "Registros & Checklists",
+        examples: [
+            "Planillas de control",
+            "Listas de verificación",
+            "Flujos de proceso",
+        ],
+        color: "from-amber-600 to-orange-600",
+        borderColor: "border-amber-500/30",
+        hoverColor: "hover:border-amber-500/60",
+    },
+];
+---
+
+<div class="evidence-type-selector">
+    <div class="text-center mb-6 md:mb-8">
+        <h2 class="text-xl md:text-2xl font-bold text-white mb-2">
+            ¿Qué tipo de evidencia estás aportando?
+        </h2>
+        <p class="text-sm md:text-base text-slate-400">
+            Selecciona la categoría que mejor representa tu evidencia
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        {
+            categories.map((cat) => (
+                <button
+                    type="button"
+                    class={`category-card glass-card p-4 md:p-6 text-left transition-all duration-300 cursor-pointer ${cat.borderColor} ${cat.hoverColor} hover:scale-105 hover:shadow-xl active:scale-100`}
+                    data-category={cat.id}
+                    onclick={`${onCategorySelect}('${cat.id}')`}
+                >
+                    <div
+                        class={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-gradient-to-br ${cat.color} flex items-center justify-center mb-3 md:mb-4`}
+                    >
+                        <span class="text-2xl md:text-3xl">{cat.icon}</span>
+                    </div>
+
+                    <h3 class="text-lg md:text-xl font-bold text-white mb-1">
+                        {cat.title}
+                    </h3>
+                    <p class="text-slate-400 text-xs md:text-sm mb-3 md:mb-4">
+                        {cat.subtitle}
+                    </p>
+
+                    <div class="space-y-1.5 md:space-y-2">
+                        <p class="text-xs text-slate-500 uppercase tracking-wide">
+                            Ejemplos:
+                        </p>
+                        <ul class="space-y-1">
+                            {cat.examples.map((ex) => (
+                                <li class="text-xs md:text-sm text-slate-400 flex items-start gap-2">
+                                    <span class="w-1 h-1 rounded-full bg-slate-500 mt-1.5 flex-shrink-0" />
+                                    <span class="line-clamp-2">{ex}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </button>
+            ))
+        }
+    </div>
+</div>
+
+<style>
+    .category-card {
+        border: 1px solid;
+        min-height: 200px;
+    }
+
+    .category-card:focus {
+        outline: none;
+        ring: 2px;
+        ring-color: rgba(167, 139, 250, 0.5);
+    }
+
+    .category-card.selected {
+        border-color: rgba(167, 139, 250, 0.6);
+        box-shadow: 0 0 20px rgba(167, 139, 250, 0.2);
+    }
+
+    @media (max-width: 640px) {
+        .category-card {
+            min-height: 180px;
+        }
+    }
+
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>

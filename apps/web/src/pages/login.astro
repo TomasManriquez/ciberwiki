@@ -1,0 +1,421 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+// Check if already logged in
+const token = Astro.cookies.get("auth_token");
+if (token) {
+    return Astro.redirect("/dashboard");
+}
+
+const API_URL = import.meta.env.PUBLIC_API_URL || "http://localhost:3000";
+---
+
+<Layout title="Iniciar Sesión - Allware Wiki" showSidebar={false}>
+    <div class="min-h-screen flex items-center justify-center px-4 py-12">
+        <div class="w-full max-w-md">
+            <!-- Logo & Title -->
+            <div class="text-center mb-8 animate-fade-in">
+                <a
+                    href="/"
+                    class="inline-flex items-center space-x-3 mb-6 group"
+                >
+                    <div
+                        class="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-blue-500/25 transition-all duration-300"
+                    >
+                        <span class="text-2xl font-bold text-white">A</span>
+                    </div>
+                </a>
+                <h1 class="text-3xl font-bold text-white mb-2">Bienvenido</h1>
+                <p class="text-slate-400">Inicia sesión en Allware Wiki</p>
+            </div>
+
+            <!-- Login Card -->
+            <div
+                class="glass-card p-8 animate-fade-in"
+                style="animation-delay: 0.1s;"
+            >
+                <!-- Error Message -->
+                <div
+                    id="error-message"
+                    class="hidden mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg"
+                >
+                    <p class="text-red-400 text-sm flex items-center gap-2">
+                        <svg
+                            class="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            ></path>
+                        </svg>
+                        <span id="error-text"></span>
+                    </p>
+                </div>
+
+                <!-- Auth Method Tabs -->
+                <div class="flex mb-6 bg-slate-800/50 rounded-lg p-1">
+                    <button
+                        id="tab-ldap"
+                        class="flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all duration-200 bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg"
+                        onclick="switchTab('ldap')"
+                    >
+                        <span class="flex items-center justify-center gap-2">
+                            <svg
+                                class="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                                ></path>
+                            </svg>
+                            Corporativo
+                        </span>
+                    </button>
+                    <button
+                        id="tab-google"
+                        class="flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all duration-200 text-slate-400 hover:text-white"
+                        onclick="switchTab('google')"
+                    >
+                        <span class="flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24">
+                                <path
+                                    fill="currentColor"
+                                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                ></path>
+                                <path
+                                    fill="currentColor"
+                                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                ></path>
+                                <path
+                                    fill="currentColor"
+                                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                                ></path>
+                                <path
+                                    fill="currentColor"
+                                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                                ></path>
+                            </svg>
+                            Google
+                        </span>
+                    </button>
+                </div>
+
+                <!-- LDAP Login Form -->
+                <form id="ldap-form" class="space-y-5">
+                    <div>
+                        <label
+                            for="username"
+                            class="block text-sm font-medium text-slate-300 mb-2"
+                        >
+                            Usuario
+                        </label>
+                        <div class="relative">
+                            <span
+                                class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
+                            >
+                                <svg
+                                    class="w-5 h-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                    ></path>
+                                </svg>
+                            </span>
+                            <input
+                                type="text"
+                                id="username"
+                                name="username"
+                                class="input-field pl-12"
+                                placeholder="Ingresa tu usuario"
+                                required
+                                autocomplete="username"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label
+                            for="password"
+                            class="block text-sm font-medium text-slate-300 mb-2"
+                        >
+                            Contraseña
+                        </label>
+                        <div class="relative">
+                            <span
+                                class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
+                            >
+                                <svg
+                                    class="w-5 h-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                    ></path>
+                                </svg>
+                            </span>
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                class="input-field pl-12"
+                                placeholder="Ingresa tu contraseña"
+                                required
+                                autocomplete="current-password"
+                            />
+                            <button
+                                type="button"
+                                onclick="togglePassword()"
+                                class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                            >
+                                <svg
+                                    id="eye-icon"
+                                    class="w-5 h-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                    ></path>
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                    ></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        id="ldap-submit"
+                        class="w-full btn-primary py-3.5 text-base flex items-center justify-center gap-2"
+                    >
+                        <span id="ldap-btn-text">Iniciar Sesión</span>
+                        <svg
+                            id="ldap-spinner"
+                            class="hidden w-5 h-5 animate-spin"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                        >
+                            <circle
+                                class="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                stroke-width="4"></circle>
+                            <path
+                                class="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                        </svg>
+                    </button>
+                </form>
+
+                <!-- Google Login Section -->
+                <div id="google-section" class="hidden">
+                    <a
+                        href={`${API_URL}/api/auth/google`}
+                        class="w-full btn-secondary py-3.5 text-base flex items-center justify-center gap-3 hover:bg-slate-600/50"
+                    >
+                        <svg class="w-5 h-5" viewBox="0 0 24 24">
+                            <path
+                                fill="#4285F4"
+                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                            ></path>
+                            <path
+                                fill="#34A853"
+                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                            ></path>
+                            <path
+                                fill="#FBBC05"
+                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                            ></path>
+                            <path
+                                fill="#EA4335"
+                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                            ></path>
+                        </svg>
+                        Continuar con Google
+                    </a>
+
+                    <p class="mt-4 text-center text-sm text-slate-500">
+                        Usa tu cuenta de Google corporativa o personal
+                    </p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <p
+                class="text-center text-slate-500 text-sm mt-8 animate-fade-in"
+                style="animation-delay: 0.2s;"
+            >
+                ¿Problemas para acceder? Contacta al equipo de TI
+            </p>
+        </div>
+    </div>
+</Layout>
+
+<script define:vars={{ API_URL: "http://localhost:3000" }}>
+    // Tab switching
+    function switchTab(tab) {
+        const ldapForm = document.getElementById("ldap-form");
+        const googleSection = document.getElementById("google-section");
+        const tabLdap = document.getElementById("tab-ldap");
+        const tabGoogle = document.getElementById("tab-google");
+
+        if (tab === "ldap") {
+            ldapForm.classList.remove("hidden");
+            googleSection.classList.add("hidden");
+            tabLdap.className =
+                "flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all duration-200 bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg";
+            tabGoogle.className =
+                "flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all duration-200 text-slate-400 hover:text-white";
+        } else {
+            ldapForm.classList.add("hidden");
+            googleSection.classList.remove("hidden");
+            tabGoogle.className =
+                "flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all duration-200 bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg";
+            tabLdap.className =
+                "flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all duration-200 text-slate-400 hover:text-white";
+        }
+
+        hideError();
+    }
+    window.switchTab = switchTab;
+
+    // Toggle password visibility
+    function togglePassword() {
+        const passwordInput = document.getElementById("password");
+        const eyeIcon = document.getElementById("eye-icon");
+
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            eyeIcon.innerHTML =
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />';
+        } else {
+            passwordInput.type = "password";
+            eyeIcon.innerHTML =
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />';
+        }
+    }
+    window.togglePassword = togglePassword;
+
+    // Show/hide error
+    function showError(message) {
+        const errorDiv = document.getElementById("error-message");
+        const errorText = document.getElementById("error-text");
+        errorText.textContent = message;
+        errorDiv.classList.remove("hidden");
+    }
+
+    function hideError() {
+        const errorDiv = document.getElementById("error-message");
+        errorDiv.classList.add("hidden");
+    }
+
+    // LDAP Login form submission
+    document
+        .getElementById("ldap-form")
+        .addEventListener("submit", async (e) => {
+            e.preventDefault();
+            hideError();
+
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value;
+            const submitBtn = document.getElementById("ldap-submit");
+            const btnText = document.getElementById("ldap-btn-text");
+            const spinner = document.getElementById("ldap-spinner");
+
+            // Show loading state
+            submitBtn.disabled = true;
+            btnText.textContent = "Iniciando sesión...";
+            spinner.classList.remove("hidden");
+
+            try {
+                const response = await fetch(`${API_URL}/api/auth/login/ldap`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ username, password }),
+                    credentials: "include",
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Redirect to dashboard
+                    window.location.href = "/dashboard";
+                } else {
+                    showError(data.error || "Error de autenticación");
+                }
+            } catch (error) {
+                console.error("Login error:", error);
+                showError("Error de conexión. Por favor, intenta de nuevo.");
+            } finally {
+                // Reset button state
+                submitBtn.disabled = false;
+                btnText.textContent = "Iniciar Sesión";
+                spinner.classList.add("hidden");
+            }
+        });
+</script>
+
+<style>
+    /* Custom animations */
+    .animate-fade-in {
+        animation: fadeIn 0.5s ease-out forwards;
+        opacity: 0;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Input focus glow effect */
+    .input-field:focus {
+        box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.2);
+    }
+
+    /* Button disabled state */
+    button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+</style>

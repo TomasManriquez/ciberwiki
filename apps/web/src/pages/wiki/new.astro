@@ -1,0 +1,71 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Navigation from "../../components/Navigation.astro";
+
+const API_URL = "http://localhost:3000";
+---
+
+<Layout title="New Wiki Page">
+    <Navigation title="Allware Wiki" />
+
+    <main class="pt-24 pb-16 min-h-screen">
+        <div class="max-w-4xl mx-auto px-6">
+            <h1 class="text-4xl font-bold text-gradient mb-8">Create New Page</h1>
+
+            <form id="createPageForm" class="glass-card p-8 space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Title</label>
+                    <input type="text" name="title" required class="input-field" placeholder="Page Title" />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Slug</label>
+                    <input type="text" name="slug" required class="input-field" placeholder="page-slug" />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Content (Markdown)</label>
+                    <textarea name="content" rows="15" required class="input-field font-mono" placeholder="# Heading\n\nWrite your content here..."></textarea>
+                </div>
+
+                <div class="flex justify-end space-x-4 pt-4">
+                    <a href="/wiki" class="btn-secondary">Cancel</a>
+                    <button type="submit" class="btn-primary">Create Page</button>
+                </div>
+            </form>
+        </div>
+    </main>
+</Layout>
+
+<script>
+    const API_URL = "http://localhost:3000";
+    const form = document.getElementById('createPageForm') as HTMLFormElement;
+
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch(`${API_URL}/api/wiki`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                if (response.ok) {
+                    const page = await response.json();
+                    window.location.href = `/wiki/${page.slug}`;
+                } else {
+                    alert('Failed to create page');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred');
+            }
+        });
+    }
+</script>

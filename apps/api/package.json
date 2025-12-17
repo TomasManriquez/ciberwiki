@@ -1,0 +1,33 @@
+{
+    "name": "api",
+    "version": "1.0.0",
+    "scripts": {
+        "dev": "tsx watch src/index.ts",
+        "test": "vitest",
+        "db:generate": "drizzle-kit generate",
+        "db:migrate": "drizzle-kit migrate",
+        "db:push": "drizzle-kit push",
+        "db:seed": "tsx seed.ts"
+    },
+    "dependencies": {
+        "@hono/node-server": "^1.0.0",
+        "astro": "5.16.2",
+        "better-sqlite3": "^11.0.0",
+        "dotenv": "^16.0.0",
+        "drizzle-orm": "^0.44.7",
+        "hono": "^4.0.0",
+        "ldapjs": "^3.0.7",
+        "uuid": "^9.0.0",
+        "zod": "^3.0.0"
+    },
+    "devDependencies": {
+        "@types/better-sqlite3": "^7.6.0",
+        "@types/ldapjs": "^3.0.6",
+        "@types/node": "^20.0.0",
+        "@types/uuid": "^9.0.0",
+        "drizzle-kit": "^0.31.7",
+        "tsx": "^4.0.0",
+        "typescript": "^5.0.0",
+        "vitest": "^4.0.14"
+    }
+}

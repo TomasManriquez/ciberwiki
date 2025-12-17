@@ -1,0 +1,153 @@
+---
+import "../styles/global.css";
+import Sidebar from "../components/Sidebar.astro";
+
+interface Props {
+	title: string;
+	description?: string;
+	showSidebar?: boolean;
+}
+
+const {
+	title,
+	description = "Allware Wiki - Secure Documentation Portal",
+	showSidebar = true,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="es" class="dark">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="description" content={description} />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+			rel="stylesheet"
+		/>
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+		<script is:inline>
+			// Prevent flash of wrong theme
+			if (localStorage.getItem("theme") === "light") {
+				document.documentElement.classList.add("light-mode");
+			}
+			// Prevent flash of wrong sidebar state
+			if (localStorage.getItem("sidebar-collapsed") === "true") {
+				document.documentElement.classList.add("sidebar-is-collapsed");
+			}
+		</script>
+	</head>
+	<body class="transition-colors duration-300">
+		<div
+			class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/10 to-slate-900"
+		>
+			<!-- Background Effects -->
+			<div class="fixed inset-0 overflow-hidden pointer-events-none">
+				<div
+					class="absolute top-0 -left-4 w-72 md:w-96 h-72 md:h-96 bg-purple-500/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70"
+				>
+				</div>
+				<div
+					class="absolute top-0 -right-4 w-72 md:w-96 h-72 md:h-96 bg-blue-500/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70"
+				>
+				</div>
+				<div
+					class="absolute -bottom-8 left-20 w-72 md:w-96 h-72 md:h-96 bg-pink-500/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70"
+				>
+				</div>
+			</div>
+
+			{showSidebar && <Sidebar />}
+
+			<!-- Content with responsive margins -->
+			<main
+				id="main-content"
+				class={`relative z-10 transition-all duration-300 ${showSidebar ? "lg:ml-[260px]" : ""}`}
+			>
+				<slot />
+			</main>
+		</div>
+
+		<!-- Mobile sidebar overlay -->
+		<div
+			id="sidebar-overlay"
+			class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden"
+		>
+		</div>
+
+		<style>
+			/* Light mode body styles */
+			:global(.light-mode) body {
+				@apply bg-slate-50 text-slate-900;
+			}
+
+			:global(.light-mode) .min-h-screen {
+				background: linear-gradient(
+					to bottom right,
+					#f8fafc,
+					#f1f5f9,
+					#f8fafc
+				) !important;
+			}
+
+			/* Sidebar collapsed state - desktop */
+			:global(.sidebar-is-collapsed) #main-content {
+				margin-left: 70px !important;
+			}
+
+			@media (max-width: 1023px) {
+				:global(.sidebar-is-collapsed) #main-content,
+				#main-content {
+					margin-left: 0 !important;
+				}
+			}
+		</style>
+
+		<script>
+			// Handle sidebar collapsed state for main content
+			const sidebar = document.getElementById("sidebar");
+			const mainContent = document.getElementById("main-content");
+			const overlay = document.getElementById("sidebar-overlay");
+
+			function updateMainMargin() {
+				if (!mainContent || window.innerWidth < 1024) return;
+
+				if (sidebar?.classList.contains("collapsed")) {
+					mainContent.style.marginLeft = "70px";
+				} else {
+					mainContent.style.marginLeft = "260px";
+				}
+			}
+
+			if (sidebar && mainContent) {
+				const observer = new MutationObserver(updateMainMargin);
+				observer.observe(sidebar, {
+					attributes: true,
+					attributeFilter: ["class"],
+				});
+
+				// Initial state
+				updateMainMargin();
+
+				// Handle resize
+				window.addEventListener("resize", () => {
+					if (window.innerWidth < 1024) {
+						mainContent.style.marginLeft = "0";
+					} else {
+						updateMainMargin();
+					}
+				});
+			}
+
+			// Mobile sidebar toggle
+			overlay?.addEventListener("click", () => {
+				sidebar?.classList.remove("open");
+				overlay.classList.add("hidden");
+			});
+		</script>
+	</body>
+</html>
